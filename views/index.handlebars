@@ -41,7 +41,7 @@
 
 	<!-- Jumbotron -->
 	<div class="jumbotron text-center">
-	  <h1>NY Times Mongo Scraper - handle bars is Working </h1>
+	  <h1>NY Times Mongo Scraper - handle bars is qeoking </h1>
 	  <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p>
 	</div>
 <!-- 
@@ -49,6 +49,19 @@
 		<div class="panel panel-default">
   		<div class="panel-heading ">Articles</div>
   		
+   			{{#each article}}
+				<div class="panel-body articles">
+					<p>{{this.title}}</p>
+				</div>
+				<div class="panel-body">
+				{{this.link}}
+				<br>
+					<button type="button" data-id={{this._id}}>Save this Article</button>
+				</div>
+			{{/each}}
+
+		
+ 
   		
 		</div>
 

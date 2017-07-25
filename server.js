@@ -22,6 +22,8 @@ var cheerio = require("cheerio");
 // Initialize Express
 var app = express();
 
+var methodOverride = require("method-override");
+
 // Override with POST having ?_method=DELETE
 app.use(methodOverride("_method"));
 
@@ -30,7 +32,7 @@ var exphbs = require("express-handlebars");
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-var methodOverride = require("method-override");
+
 
 // Set mongoose to leverage built in JavaScript ES6 Promises
 mongoose.Promise = Promise;
@@ -38,7 +40,7 @@ mongoose.Promise = Promise;
 // Require our userModel model
 var Example = require("./models/article.js");
 
-
+var Note = require("./models/Note.js");
 
 //use body parser with app
 app.use(bodyParser.urlencoded({
@@ -116,13 +118,76 @@ app.get("/articles", function(req, res) {
     }
     // Or send the doc to the browser
     else {
-      res.send(doc);
-      // res.render("index", {article: doc});
+      // res.send(doc);
+      // res.render("index");
+      // console.log('hey this happened')
+      res.render("index", {article: doc});
       //renders index page, and sends key article and value doc
     }
   })
 
 });
+
+// This will grab an article by it's ObjectId
+app.get("/articles/:id", function(req, res) {
+
+
+  // TODO
+  // ====
+
+  // Finish the route so it finds one article using the req.params.id,
+  Article.findOneAndUpdate({"_id": req.params.id}, {$push: {"note": doc._id}})
+    // Article.findOne({
+    //   _id: req.params.id
+    // })
+  // and run the populate method with "note",
+    .populate("note")
+    .exec(function(error, doc){
+        if (error) {
+        res.send(error);
+      }
+      // Or send the doc to the browser
+      else {
+        res.send(doc);
+      }
+
+    });
+  // then responds with the article with the note included
+
+
+});
+
+
+
+// Create a new note or replace an existing note
+app.post("/saveArticle/:id", function(req, res) {
+
+  //1. Save the article OUR article list
+  //2. res.json("Success!");
+
+  // var newNote = new Example(req.body);
+
+  // newNote.save(function(error, doc){
+  //     if (error) {
+  //       res.send(error);
+  //     }
+  //     // Or send the doc to the browser
+  //     else {
+  //       Example.findOneAndUpdate({"_id": req.params.id}, {"note": doc._id})
+  //       .exec(function(error, doc){
+  //          if (error) {
+  //         res.send(error);
+  //       }
+  //       // Or send the doc to the browser
+  //       else {
+  //         res.send(doc);
+  //       }
+
+  //       })
+  //     }
+  // })
+});
+
 
 
 
