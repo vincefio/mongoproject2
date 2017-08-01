@@ -150,7 +150,7 @@ app.post("/save/:id",function(req,res){
 
   },{ new: true }).exec(function(err, doc){
       if (err) {
-      res.send(err);
+        res.send(err);
      }
      else{
 
@@ -159,7 +159,7 @@ app.post("/save/:id",function(req,res){
 
       }
       console.log("worked")
-      res.redirect("/articles")
+      res.redirect("/saved")
       
       console.log(doc)
 
