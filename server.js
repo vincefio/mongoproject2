@@ -250,13 +250,11 @@ console.log(req.params.id)
           var hbsObject = {
             notes: doc
         }
-      }
+
         console.log('worked')
         console.log(doc);
         res.render("saved", hbsObject);
-        
-       
-      
+      }      
     })
 
  });
