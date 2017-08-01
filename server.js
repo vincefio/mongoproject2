@@ -139,7 +139,7 @@ app.get("/saved", function(req, res){
   })
 
 //When save button is clicked 
-app.post("/:id",function(req,res){
+app.post("/save/:id",function(req,res){
   
   // var id = new mongoose.Types.ObjectId(req.params.id);
 
@@ -159,12 +159,12 @@ app.post("/:id",function(req,res){
 
       }
       console.log("worked")
-      res.redirect("/scrape")
+      res.redirect("/articles")
       
       console.log(doc)
 
      }
-  })
+  });
 
 })
 
