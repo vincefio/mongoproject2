@@ -1,14 +1,4 @@
-// express
 
-// express-handlebars
-
-// mongoose
-
-// body-parser
-
-// cheerio
-
-// request
 
 // Dependencies
 var express = require("express");
@@ -38,7 +28,7 @@ app.set("view engine", "handlebars");
 mongoose.Promise = Promise;
 
 // Require our userModel model
-var Example = require("./models/article.js");
+var Article = require("./models/article.js");
 
 var Note = require("./models/Note.js");
 
@@ -67,7 +57,12 @@ db.once("open", function() {
 // Routes
 // ======
 
-// A GET request to scrape the echojs website
+app.get("/", function(req, res){
+  console.log('home route was hit');
+  res.render("index");
+})
+
+// A GET request to scrape the nyt website
 app.get("/scrape", function(req, res) {
   // First, we grab the body of the html with request
   request("http://www.nytimes.com/", function(error, response, html) {
@@ -85,7 +80,7 @@ app.get("/scrape", function(req, res) {
 
       // Using our Article model, create a new entry
       // This effectively passes the result object to the entry (and the title and link)
-      var entry = new Example(result);
+      var entry = new Article(result);
 
       // Now, save that entry to the db
       entry.save(function(err, doc) {
@@ -96,14 +91,96 @@ app.get("/scrape", function(req, res) {
         // Or log the doc
         else {
           // console.log(doc);
-          console.log(doc);
+          // console.log(doc);
         }
       });
 
     });
   });
-  // Tell the browser that we finished scraping the text
-  res.send("Scrape Complete");
+
+  Article.find({"saved": false}).limit(20).sort({"created_at" : -1}).exec(function(err, doc){
+      if (err) {
+      console.log(err);
+    }
+    // Otherwise, save the result as an handlebars object
+    else {
+      
+      var hbsObject = {
+          articles: doc
+
+      }
+      console.log(doc)
+      res.render("index", hbsObject)
+    }
+  })
+
+  // // Tell the browser that we finished scraping the text
+  // res.send("Scrape Complete");
+});
+
+
+
+app.get("/saved", function(req, res){
+    console.log('saved was hit!!!!')
+    Article.find({"saved": true}).populate("note").
+    exec(function(error, doc){
+         if (error) {
+        console.log(error);
+      }
+      else{
+         var hbsObject = {
+            articles: doc
+        }
+        console.log("doc " + doc);
+       res.render("saved", hbsObject) 
+      }
+    })
+  })
+
+//When save button is clicked 
+app.post("/:id",function(req,res){
+  
+  // var id = new mongoose.Types.ObjectId(req.params.id);
+
+  Article.findOneAndUpdate({
+    "_id": req.params.id
+  },{
+    $set: {"saved": true}, 
+
+  },{ new: true }).exec(function(err, doc){
+      if (err) {
+      res.send(err);
+     }
+     else{
+
+      var hbsObject = {
+          articles: doc
+
+      }
+      console.log("worked")
+      res.redirect("/scrape")
+      
+      console.log(doc)
+
+     }
+  })
+
+})
+
+//to delete a note
+app.delete("/delete/:id", function(req, res){
+  // Article = Article.toObject();
+  Article.remove({"_id": req.params.id})
+  .exec(function(err,doc){
+      if (err) {
+            res.send(err);
+          }
+        else{
+          console.log(doc)
+          return res.redirect("/saved")
+          }
+        
+  })
 });
 
 // This will get the articles we scraped from the mongoDB
@@ -111,7 +188,7 @@ app.get("/articles", function(req, res) {
 
 
   // TODO: Finish the route so it grabs all of the articles
-  Example.find({}, function(error, doc){
+  Article.find({}, function(error, doc){
     // Send any errors to the browser
     if (error) {
       res.send(error);
@@ -146,7 +223,7 @@ app.get("/articles/:id", function(req, res) {
         if (error) {
         res.send(error);
       }
-      // Or send the doc to the browser
+      // Or send the doc to the browserz
       else {
         res.send(doc);
       }
@@ -157,36 +234,76 @@ app.get("/articles/:id", function(req, res) {
 
 });
 
+//this route will show all of the notes in a given article
+app.get("/:id", function(req, res) {
+console.log(req.params.id)
+ 
+  Article.findOne({
+    "_id": req.params.id
+  }).populate("note").exec(function(error, doc){
+      if (error) {
+        res.send(error);
+      }
+      // Or send the doc to the browser
+      else {
+          var hbsObject = {
+            notes: doc
+        }
+      }
+        console.log('worked')
+        console.log(doc);
+        res.render("saved", hbsObject);
+        
+       
+      
+    })
+
+ });
+
 
 
 // Create a new note or replace an existing note
-app.post("/saveArticle/:id", function(req, res) {
+app.post("/saved/:id", function(req, res) {
+console.log("working a little");
+  var newNote = new Note(req.body);
+  // console.log(newNote.title)
 
-  //1. Save the article OUR article list
-  //2. res.json("Success!");
+  newNote.save(function(error, doc){
+     if (error) {
+      res.send(error);
+    }
+      else{
+        Article.findOneAndUpdate({"_id": req.params.id},
+         {$push: {"note": doc._id} }, {new: true})
+        .exec(function(err, newdoc){
+            if (err) {
+            res.send(err);
+          }
+          else{
+            console.log(newNote)
+            res.redirect("/saved")
+          }
+        })
+      //   Note.find({"_id": req.params.id}).
+      //   exec(function(err, newdoc){
+      //       if (err) {
+      //       res.send(err);
+      //     }
+      //     else{
+      //       console.log("newdoc " + newdoc)
+            
+      //       var hbsObject = {
+      //       notes: doc
+      //       }
+      //       res.render("/saved", hbsObject);
+      //     }
+      //   })
+      // }
 
-  // var newNote = new Example(req.body);
-
-  // newNote.save(function(error, doc){
-  //     if (error) {
-  //       res.send(error);
-  //     }
-  //     // Or send the doc to the browser
-  //     else {
-  //       Example.findOneAndUpdate({"_id": req.params.id}, {"note": doc._id})
-  //       .exec(function(error, doc){
-  //          if (error) {
-  //         res.send(error);
-  //       }
-  //       // Or send the doc to the browser
-  //       else {
-  //         res.send(doc);
-  //       }
-
-  //       })
-  //     }
-  // })
+  }
 });
+})
+
 
 
 
